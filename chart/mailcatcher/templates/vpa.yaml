@@ -1,0 +1,25 @@
+{{- if .Values.autoscaling.vpa.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "mailcatcher.fullname" . }}-vpa
+  labels:
+    {{- include "mailcatcher.labels" . | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: {{ include "mailcatcher.fullname" . }}
+  updatePolicy:
+    updateMode: {{ .Values.autoscaling.vpa.mode | default "InPlaceOrRecreate" }}
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        minAllowed:
+          cpu: {{ .Values.autoscaling.vpa.minAllowed.cpu | default "10m" }}
+          memory: {{ .Values.autoscaling.vpa.minAllowed.memory | default "50Mi" }}
+        maxAllowed:
+          cpu: {{ .Values.autoscaling.vpa.maxAllowed.cpu | default .Values.resources.limits.cpu }}
+          memory: {{ .Values.autoscaling.vpa.maxAllowed.memory | default .Values.resources.limits.memory }}
+        controlledResources: ["cpu", "memory"]
+{{- end }}
