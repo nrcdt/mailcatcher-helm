@@ -45,6 +45,21 @@ The following table lists the configurable parameters of the Mailcatcher chart a
 | tolerations               | Tolerations for scheduling               | []                         |
 | affinity                  | Pod affinity rules                       | {}                         |
 
+#### Autoscaling
+
+| Parameter                              | Description                                                      | Default            |
+|----------------------------------------|------------------------------------------------------------------|--------------------|
+| autoscaling.enabled                    | Enable HorizontalPodAutoscaler                                  | false              |
+| autoscaling.minReplicas                | Minimum number of replicas                                       | 1                  |
+| autoscaling.maxReplicas                | Maximum number of replicas                                       | 100                |
+| autoscaling.targetCPUUtilizationPercentage | Target CPU utilization for scaling                           | 80                 |
+| autoscaling.vpa.enabled                | Enable VerticalPodAutoscaler (requires VPA controller)           | false              |
+| autoscaling.vpa.mode                   | VPA update mode: Off, Initial, Recreate, InPlaceOrRecreate, Auto | InPlaceOrRecreate  |
+| autoscaling.vpa.minAllowed.cpu         | Minimum CPU the VPA can set                                      | 10m                |
+| autoscaling.vpa.minAllowed.memory      | Minimum memory the VPA can set                                   | 50Mi               |
+| autoscaling.vpa.maxAllowed.cpu         | Maximum CPU the VPA can set (defaults to resources.limits.cpu)   |                    |
+| autoscaling.vpa.maxAllowed.memory      | Maximum memory the VPA can set (defaults to resources.limits.memory) |                |
+
 #### Ingress (nginx)
 
 | Parameter                 | Description                              | Default                    |

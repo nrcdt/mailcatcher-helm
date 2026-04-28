@@ -155,6 +155,20 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
+  # Vertical Pod Autoscaler - requires the VPA controller to be installed in the cluster
+  # https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler
+  vpa:
+    enabled: false
+    # Update mode: "Off", "Initial", "Recreate", "InPlaceOrRecreate", or "Auto"
+    mode: InPlaceOrRecreate
+    minAllowed:
+      cpu: 10m
+      memory: 50Mi
+    # maxAllowed defaults to resources.limits if not set
+    maxAllowed: {}
+    #   cpu: 100m
+    #   memory: 128Mi
+
 # Additional volumes on the output Deployment definition.
 volumes: []
 # - name: foo
