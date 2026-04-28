@@ -1,0 +1,46 @@
+{{- if and .Values.gateway.enabled (or .Values.gateway.oidc.enabled .Values.gateway.jwt.enabled) }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: {{ include "mailcatcher.fullname" . }}
+  labels:
+    {{- include "mailcatcher.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ include "mailcatcher.fullname" . }}
+  {{- if .Values.gateway.oidc.enabled }}
+  oidc:
+    provider:
+      issuer: {{ .Values.gateway.oidc.provider.issuer | quote }}
+      authorizationEndpoint: {{ .Values.gateway.oidc.provider.authorizationEndpoint | quote }}
+      tokenEndpoint: {{ .Values.gateway.oidc.provider.tokenEndpoint | quote }}
+    clientID: {{ .Values.gateway.oidc.clientID | quote }}
+    clientSecret:
+      name: {{ if .Values.gateway.oidc.existingSecret }}{{ .Values.gateway.oidc.existingSecret | quote }}{{ else }}{{ include "mailcatcher.fullname" . }}-oidc-client{{ end }}
+    redirectURL: {{ .Values.gateway.oidc.redirectURL | quote }}
+    {{- if .Values.gateway.oidc.scopes }}
+    scopes:
+      {{- range .Values.gateway.oidc.scopes }}
+      - {{ . | quote }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if .Values.gateway.jwt.enabled }}
+  jwt:
+    providers:
+      {{- range .Values.gateway.jwt.providers }}
+      - name: {{ .name | quote }}
+        issuer: {{ .issuer | quote }}
+        {{- if .audiences }}
+        audiences:
+          {{- range .audiences }}
+          - {{ . | quote }}
+          {{- end }}
+        {{- end }}
+        remoteJWKS:
+          uri: {{ .remoteJWKS.uri | quote }}
+      {{- end }}
+  {{- end }}
+{{- end }}

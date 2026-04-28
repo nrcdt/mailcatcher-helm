@@ -1,0 +1,58 @@
+{{- if .Values.networkPolicy.enabled }}
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ include "mailcatcher.fullname" . }}
+  labels: {{- include "mailcatcher.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "mailcatcher.labels" . | nindent 4 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  {{- if .Values.networkPolicy.allowExternalEgress }}
+  egress:
+    - {}
+  {{- else }}
+  egress:
+    # Allow dns resolution
+    - ports:
+        - port: 53
+          protocol: UDP
+    # Allow outbound connections to other cluster pods
+    - ports:
+        - port: {{ .Values.smtp_service.port }}
+        - port: {{ .Values.http_service.port }}
+        - port: 53
+          protocol: UDP
+      to:
+        - podSelector:
+            matchLabels: {{- include "mailcatcher.labels" . | nindent 14 }}
+  {{- end }}
+  ingress:
+    # Allow inbound connections
+    - ports:
+        - port: {{ .Values.smtp_service.port }}
+        - port: {{ .Values.http_service.port }}
+        - port: 53
+          protocol: UDP
+      {{- if not .Values.networkPolicy.allowExternal }}
+      from:
+        - podSelector:
+            matchLabels:
+              {{ include "mailcatcher.fullname" . }}-client: "true"
+        - podSelector:
+            matchLabels: {{- include "mailcatcher.labels" . | nindent 14 }}
+        {{- if .Values.gateway.enabled }}
+        # Allow traffic from the Envoy Gateway proxy namespace
+        {{- range .Values.gateway.parentRefs }}
+        {{- if .namespace }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .namespace }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+      {{- end }}
+{{- end }}

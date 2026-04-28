@@ -54,6 +54,11 @@ smtp_service:
   type: ClusterIP
   port: 25
 
+networkPolicy:
+  enabled: true
+  allowExternal: true
+
+commonLabels: {}
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
   htpasswd:
@@ -75,6 +80,50 @@ ingress:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
+
+# This block is for setting up the Gateway API HTTPRoute as an alternative to Ingress.
+# Requires a Gateway API implementation (e.g., Envoy Gateway) to be installed in the cluster.
+# The HTTPRoute references a parent Gateway that must already exist.
+gateway:
+  enabled: false
+  annotations: {}
+
+  # Parent Gateway reference(s) - the Gateway must already exist in the cluster
+  parentRefs:
+    - name: eg
+      namespace: envoy-gateway-system
+
+  # Hostnames to match on
+  hostnames:
+    - mailcatcher.example.com
+
+  # OIDC redirect flow (browser-based login via Envoy Gateway SecurityPolicy)
+  # Users are redirected to the IdP login page and back after authentication.
+  oidc:
+    enabled: false
+    provider:
+      issuer: ""                      # e.g. https://keycloak.example.com/realms/myrealm
+      authorizationEndpoint: ""       # e.g. https://keycloak.example.com/realms/myrealm/protocol/openid-connect/auth
+      tokenEndpoint: ""               # e.g. https://keycloak.example.com/realms/myrealm/protocol/openid-connect/token
+    clientID: ""
+    clientSecret: ""                  # Inline secret value (chart creates the Secret)
+    existingSecret: ""                # OR name of a pre-existing Secret containing key "client-secret" (takes precedence)
+    redirectURL: ""                   # e.g. https://mailcatcher.example.com/oauth2/callback
+    scopes:
+      - openid
+      - email
+      - profile
+
+  # JWT/JWKS validation (stateless token validation for API/programmatic access via Envoy Gateway SecurityPolicy)
+  # Validates JWTs already present in the request using a remote JWKS endpoint.
+  jwt:
+    enabled: false
+    providers:
+      - name: default
+        issuer: ""                    # e.g. https://keycloak.example.com/realms/myrealm
+        audiences: []                 # e.g. ["mailcatcher"]
+        remoteJWKS:
+          uri: ""                     # e.g. https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
