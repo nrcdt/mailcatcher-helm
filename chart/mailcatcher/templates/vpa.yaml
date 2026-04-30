@@ -11,7 +11,7 @@ spec:
     kind: Deployment
     name: {{ include "mailcatcher.fullname" . }}
   updatePolicy:
-    updateMode: {{ .Values.autoscaling.vpa.mode | default "InPlaceOrRecreate" }}
+    updateMode: {{ .Values.autoscaling.vpa.mode | default "InPlaceOrRecreate" | quote }}
   resourcePolicy:
     containerPolicies:
       - containerName: '*'
