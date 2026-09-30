@@ -25,8 +25,7 @@
           "type": "object",
           "properties": {
             "enabled": { "type": "boolean" },
-            "path": { "type": "string", "pattern": "^/" },
-            "backendPath": { "type": "string", "pattern": "^/" }
+            "path": { "type": "string", "pattern": "^/" }
           }
         },
         "oidc": {

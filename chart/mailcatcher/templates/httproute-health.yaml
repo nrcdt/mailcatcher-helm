@@ -5,6 +5,10 @@ metadata:
   name: {{ include "mailcatcher.fullname" . }}-health
   labels:
     {{- include "mailcatcher.labels" . | nindent 4 }}
+  {{- with .Values.gateway.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- include "mailcatcher.gateway.routeTargets" . | nindent 2 }}
   rules:
@@ -12,12 +16,6 @@ spec:
         - path:
             type: Exact
             value: {{ .Values.gateway.healthRoute.path | quote }}
-      filters:
-        - type: URLRewrite
-          urlRewrite:
-            path:
-              type: ReplaceFullPath
-              replaceFullPath: {{ .Values.gateway.healthRoute.backendPath | quote }}
       backendRefs:
         - name: {{ include "mailcatcher.fullname" . }}-http
           port: {{ .Values.http_service.port }}

@@ -100,11 +100,9 @@ gateway:
   # Unauthenticated health check route for external checkers (e.g. an upstream
   # load balancer or uptime monitor) that cannot log in. Creates a second HTTPRoute
   # without SecurityPolicy that matches only <path> exactly and rewrites it to
-  # <backendPath> on Mailcatcher. "/" returns the static UI without any messages.
   healthRoute:
     enabled: false
     path: /healthz
-    backendPath: /
 
   # OIDC redirect flow (browser-based login via Envoy Gateway SecurityPolicy)
   # Users are redirected to the IdP login page and back after authentication.
