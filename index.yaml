@@ -3,6 +3,16 @@ entries:
   mailcatcher:
   - apiVersion: v2
     appVersion: v0.10.0
+    created: "2026-09-30T11:15:46.62653569Z"
+    description: A Helm chart for Kubernetes
+    digest: 5c47437fb5a52335a821383b903f6be4775810abb220ec22c47723f2d63ee333
+    name: mailcatcher
+    type: application
+    urls:
+    - https://github.com/nrcdt/mailcatcher-helm/releases/download/mailcatcher-0.3.1/mailcatcher-0.3.1.tgz
+    version: 0.3.1
+  - apiVersion: v2
+    appVersion: v0.10.0
     created: "2026-09-30T11:00:52.257749023Z"
     description: A Helm chart for Kubernetes
     digest: 9bcdaa7fe26aa4d4a143af785a9751c27e4fa3933961e4dd535cbb4ebb70ac08
@@ -71,4 +81,4 @@ entries:
     urls:
     - https://github.com/nrcdt/mailcatcher/releases/download/mailcatcher-0.1.1/mailcatcher-0.1.1.tgz
     version: 0.1.1
-generated: "2026-09-30T11:00:52.257785419Z"
+generated: "2026-09-30T11:15:46.626568642Z"
