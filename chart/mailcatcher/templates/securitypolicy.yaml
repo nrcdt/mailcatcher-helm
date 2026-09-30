@@ -1,4 +1,5 @@
-{{- if and .Values.gateway.enabled (or .Values.gateway.oidc.enabled .Values.gateway.jwt.enabled) }}
+{{- $gw := .Values.gateway }}
+{{- if and $gw.enabled (or $gw.oidc.enabled $gw.jwt.enabled $gw.authorization.enabled) }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
 metadata:
@@ -10,37 +11,94 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       name: {{ include "mailcatcher.fullname" . }}
-  {{- if .Values.gateway.oidc.enabled }}
+  {{- with $gw.oidc }}
+  {{- if .enabled }}
   oidc:
     provider:
-      issuer: {{ .Values.gateway.oidc.provider.issuer | quote }}
-      authorizationEndpoint: {{ .Values.gateway.oidc.provider.authorizationEndpoint | quote }}
-      tokenEndpoint: {{ .Values.gateway.oidc.provider.tokenEndpoint | quote }}
-    clientID: {{ .Values.gateway.oidc.clientID | quote }}
+      issuer: {{ .provider.issuer | quote }}
+      {{- with .provider.authorizationEndpoint }}
+      authorizationEndpoint: {{ . | quote }}
+      {{- end }}
+      {{- with .provider.tokenEndpoint }}
+      tokenEndpoint: {{ . | quote }}
+      {{- end }}
+    clientID: {{ .clientID | quote }}
     clientSecret:
-      name: {{ if .Values.gateway.oidc.existingSecret }}{{ .Values.gateway.oidc.existingSecret | quote }}{{ else }}{{ include "mailcatcher.fullname" . }}-oidc-client{{ end }}
-    redirectURL: {{ .Values.gateway.oidc.redirectURL | quote }}
-    {{- if .Values.gateway.oidc.scopes }}
+      name: {{ include "mailcatcher.oidcSecretName" $ | quote }}
+    redirectURL: {{ .redirectURL | quote }}
+    {{- with .logoutPath }}
+    logoutPath: {{ . | quote }}
+    {{- end }}
+    {{- with .cookieDomain }}
+    cookieDomain: {{ . | quote }}
+    {{- end }}
+    {{- if .forwardAccessToken }}
+    forwardAccessToken: true
+    {{- end }}
+    {{- if .refreshToken }}
+    refreshToken: true
+    {{- end }}
+    {{- with .scopes }}
     scopes:
-      {{- range .Values.gateway.oidc.scopes }}
+      {{- range . }}
       - {{ . | quote }}
       {{- end }}
     {{- end }}
+    {{- with .resources }}
+    resources:
+      {{- range . }}
+      - {{ . | quote }}
+      {{- end }}
+    {{- end }}
+    {{- with .extra }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
-  {{- if .Values.gateway.jwt.enabled }}
+  {{- end }}
+  {{- with $gw.jwt }}
+  {{- if .enabled }}
   jwt:
+    {{- if .optional }}
+    optional: true
+    {{- end }}
     providers:
-      {{- range .Values.gateway.jwt.providers }}
+      {{- range .providers }}
       - name: {{ .name | quote }}
         issuer: {{ .issuer | quote }}
-        {{- if .audiences }}
+        {{- with .audiences }}
         audiences:
-          {{- range .audiences }}
+          {{- range . }}
           - {{ . | quote }}
           {{- end }}
         {{- end }}
+        {{- if and .remoteJWKS .remoteJWKS.uri }}
         remoteJWKS:
           uri: {{ .remoteJWKS.uri | quote }}
+        {{- else }}
+        localJWKS:
+          type: Inline
+          inline: {{ .localJWKS | quote }}
+        {{- end }}
+        {{- with .claimToHeaders }}
+        claimToHeaders:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .extractFrom }}
+        extractFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- if .recomputeRoute }}
+        recomputeRoute: true
+        {{- end }}
       {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- with $gw.authorization }}
+  {{- if .enabled }}
+  authorization:
+    defaultAction: {{ .defaultAction | default "Deny" }}
+    rules:
+      {{- toYaml .rules | nindent 6 }}
+  {{- end }}
   {{- end }}
 {{- end }}

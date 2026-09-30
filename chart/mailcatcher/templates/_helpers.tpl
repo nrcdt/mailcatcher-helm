@@ -60,3 +60,10 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Name of the Secret holding the OIDC client secret
+*/}}
+{{- define "mailcatcher.oidcSecretName" -}}
+{{- default (printf "%s-oidc-client" (include "mailcatcher.fullname" .)) .Values.gateway.oidc.existingSecret }}
+{{- end }}

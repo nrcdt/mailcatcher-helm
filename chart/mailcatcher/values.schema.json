@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "gateway": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "annotations": { "type": "object" },
+        "parentRefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "namespace": { "type": "string" },
+              "sectionName": { "type": "string" },
+              "port": { "type": "integer" }
+            }
+          }
+        },
+        "hostnames": { "type": "array", "items": { "type": "string" } },
+        "oidc": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "provider": {
+              "type": "object",
+              "properties": {
+                "issuer": { "type": "string" },
+                "authorizationEndpoint": { "type": "string" },
+                "tokenEndpoint": { "type": "string" }
+              }
+            },
+            "clientID": { "type": "string" },
+            "clientSecret": { "type": "string" },
+            "existingSecret": { "type": "string" },
+            "redirectURL": { "type": "string" },
+            "logoutPath": { "type": "string" },
+            "cookieDomain": { "type": "string" },
+            "forwardAccessToken": { "type": "boolean" },
+            "refreshToken": { "type": "boolean" },
+            "scopes": { "type": "array", "items": { "type": "string" } },
+            "resources": { "type": "array", "items": { "type": "string" } },
+            "extra": { "type": "object" }
+          },
+          "if": {
+            "properties": { "enabled": { "const": true } },
+            "required": ["enabled"]
+          },
+          "then": {
+            "required": ["provider", "clientID", "redirectURL"],
+            "properties": {
+              "provider": {
+                "required": ["issuer"],
+                "properties": { "issuer": { "minLength": 1 } }
+              },
+              "clientID": { "minLength": 1 },
+              "redirectURL": { "minLength": 1 }
+            },
+            "anyOf": [
+              { "required": ["clientSecret"], "properties": { "clientSecret": { "minLength": 1 } } },
+              { "required": ["existingSecret"], "properties": { "existingSecret": { "minLength": 1 } } }
+            ]
+          }
+        },
+        "jwt": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "optional": { "type": "boolean" },
+            "providers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "issuer": { "type": "string" },
+                  "audiences": { "type": "array", "items": { "type": "string" } },
+                  "remoteJWKS": {
+                    "type": "object",
+                    "properties": { "uri": { "type": "string" } }
+                  },
+                  "localJWKS": { "type": "string" },
+                  "claimToHeaders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["header", "claim"],
+                      "properties": {
+                        "header": { "type": "string", "minLength": 1 },
+                        "claim": { "type": "string", "minLength": 1 }
+                      }
+                    }
+                  },
+                  "extractFrom": { "type": "object" },
+                  "recomputeRoute": { "type": "boolean" }
+                }
+              }
+            }
+          },
+          "if": {
+            "properties": { "enabled": { "const": true } },
+            "required": ["enabled"]
+          },
+          "then": {
+            "required": ["providers"],
+            "properties": {
+              "providers": {
+                "minItems": 1,
+                "items": {
+                  "required": ["name", "issuer"],
+                  "properties": {
+                    "name": { "minLength": 1 },
+                    "issuer": { "minLength": 1 }
+                  },
+                  "anyOf": [
+                    {
+                      "required": ["remoteJWKS"],
+                      "properties": {
+                        "remoteJWKS": { "required": ["uri"], "properties": { "uri": { "minLength": 1 } } }
+                      }
+                    },
+                    { "required": ["localJWKS"], "properties": { "localJWKS": { "minLength": 1 } } }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "authorization": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "defaultAction": { "type": "string", "enum": ["Allow", "Deny"] },
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["action", "principal"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "action": { "type": "string", "enum": ["Allow", "Deny"] },
+                  "principal": { "type": "object" }
+                }
+              }
+            }
+          },
+          "if": {
+            "properties": { "enabled": { "const": true } },
+            "required": ["enabled"]
+          },
+          "then": {
+            "required": ["rules"],
+            "properties": { "rules": { "minItems": 1 } }
+          }
+        }
+      },
+      "if": {
+        "properties": { "enabled": { "const": true } },
+        "required": ["enabled"]
+      },
+      "then": {
+        "required": ["parentRefs"],
+        "properties": { "parentRefs": { "minItems": 1 } }
+      }
+    }
+  }
+}

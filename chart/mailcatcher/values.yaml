@@ -103,27 +103,75 @@ gateway:
     enabled: false
     provider:
       issuer: ""                      # e.g. https://keycloak.example.com/realms/myrealm
+      # Optional: if empty, Envoy Gateway discovers the endpoints via <issuer>/.well-known/openid-configuration
       authorizationEndpoint: ""       # e.g. https://keycloak.example.com/realms/myrealm/protocol/openid-connect/auth
       tokenEndpoint: ""               # e.g. https://keycloak.example.com/realms/myrealm/protocol/openid-connect/token
     clientID: ""
     clientSecret: ""                  # Inline secret value (chart creates the Secret)
     existingSecret: ""                # OR name of a pre-existing Secret containing key "client-secret" (takes precedence)
     redirectURL: ""                   # e.g. https://mailcatcher.example.com/oauth2/callback
+    logoutPath: ""                    # e.g. /logout - path that clears the session cookies
+    cookieDomain: ""                  # e.g. example.com - share the session cookie across subdomains
+    forwardAccessToken: false         # Forward the access token as "Authorization: Bearer" header to the backend
+    refreshToken: false               # Automatically refresh the access token using the refresh token
     scopes:
       - openid
       - email
       - profile
+    resources: []                     # Resource indicators (RFC 8707) sent to the IdP
+    # Additional fields passed through verbatim to SecurityPolicy spec.oidc
+    # (e.g. cookieNames, defaultTokenTTL, defaultRefreshTokenTTL, passThroughAuthHeader)
+    extra: {}
 
   # JWT/JWKS validation (stateless token validation for API/programmatic access via Envoy Gateway SecurityPolicy)
-  # Validates JWTs already present in the request using a remote JWKS endpoint.
+  # Validates JWTs already present in the request using a remote or inline JWKS.
   jwt:
     enabled: false
+    # If true, requests without a JWT are allowed through (invalid JWTs are still rejected).
+    # Useful together with OIDC or authorization rules.
+    optional: false
     providers:
       - name: default
         issuer: ""                    # e.g. https://keycloak.example.com/realms/myrealm
         audiences: []                 # e.g. ["mailcatcher"]
         remoteJWKS:
           uri: ""                     # e.g. https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
+        # Alternative to remoteJWKS: inline JWKS JSON string
+        localJWKS: ""
+        # Copy JWT claims into request headers for the backend
+        claimToHeaders: []
+        #  - header: x-user-email
+        #    claim: email
+        # Where to look for the token (default: Authorization Bearer header)
+        extractFrom: {}
+        #  headers:
+        #    - name: x-api-token
+        #  cookies:
+        #    - access_token
+        #  params:
+        #    - token
+        recomputeRoute: false
+
+  # Authorization rules (Envoy Gateway SecurityPolicy spec.authorization)
+  # Allows restricting access based on JWT claims/scopes or client IP ranges.
+  authorization:
+    enabled: false
+    defaultAction: Deny               # Deny or Allow
+    rules: []
+    #  - name: allow-mailcatcher-users
+    #    action: Allow
+    #    principal:
+    #      jwt:
+    #        provider: default        # must match a gateway.jwt.providers[].name
+    #        claims:
+    #          - name: groups
+    #            valueType: StringArray
+    #            values: ["mailcatcher-users"]
+    #  - name: allow-office
+    #    action: Allow
+    #    principal:
+    #      clientCIDRs:
+    #        - 10.0.0.0/8
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
