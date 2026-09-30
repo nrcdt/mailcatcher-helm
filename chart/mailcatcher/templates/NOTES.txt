@@ -3,6 +3,8 @@
 {{- range $host := .Values.ingress.hosts }}
   {{- range .paths }}
   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
 {{- else if .Values.gateway.enabled }}
 {{- range .Values.gateway.hostnames }}
   https://{{ . }}/

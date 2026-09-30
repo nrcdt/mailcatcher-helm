@@ -80,77 +80,8 @@ The following table lists the configurable parameters of the Mailcatcher chart a
 | gateway.annotations                          | Annotations for the HTTPRoute                                  | {}                       |
 | gateway.parentRefs                           | Parent Gateway references (name, namespace, sectionName, port) | [{name: eg, namespace: envoy-gateway-system}] |
 | gateway.hostnames                            | Hostnames to match on                                          | [mailcatcher.example.com] |
-
-{{/*
-Expand the name of the chart.
-*/}}
-{{- define "mailcatcher.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-*/}}
-{{- define "mailcatcher.fullname" -}}
-{{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-{{- end }}
-{{- end }}
-
-{{/*
-Create chart name and version as used by the chart label.
-*/}}
-{{- define "mailcatcher.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Common labels
-*/}}
-{{- define "mailcatcher.labels" -}}
-helm.sh/chart: {{ include "mailcatcher.chart" . }}
-{{ include "mailcatcher.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Selector labels
-*/}}
-{{- define "mailcatcher.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "mailcatcher.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "mailcatcher.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "mailcatcher.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
-{{/*
-Name of the Secret holding the OIDC client secret
-*/}}
-{{- define "mailcatcher.oidcSecretName" -}}
-{{- default (printf "%s-oidc-client" (include "mailcatcher.fullname" .)) .Values.gateway.oidc.existingSecret }}
-{{- end }}
-
+| gateway.oidc.enabled                         | Enable OIDC redirect flow via SecurityPolicy                   | false                    |
+| gateway.oidc.provider.issuer                 | OIDC provider issuer URL                                       |                          |
 | gateway.oidc.provider.authorizationEndpoint  | OIDC authorization endpoint (optional, discovered from issuer) |                          |
 | gateway.oidc.provider.tokenEndpoint          | OIDC token endpoint (optional, discovered from issuer)         |                          |
 | gateway.oidc.clientID                        | OIDC client ID                                                 |                          |
@@ -267,6 +198,8 @@ gateway:
         remoteJWKS:
           uri: https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
 ```
+
+**Both OIDC and JWT can be enabled simultaneously** -- OIDC handles browser-based login while JWT validates tokens for programmatic API access.
 
 **OIDC with endpoint discovery and logout:**
 
