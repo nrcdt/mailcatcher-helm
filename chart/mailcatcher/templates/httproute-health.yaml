@@ -1,6 +1,4 @@
 {{- if and .Values.gateway.enabled .Values.gateway.healthRoute.enabled }}
-# Unauthenticated route for external health checks. The SecurityPolicy only
-# targets the main HTTPRoute, so this exact-path match bypasses OIDC/JWT.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
