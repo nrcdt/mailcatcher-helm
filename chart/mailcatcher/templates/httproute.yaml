@@ -10,25 +10,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  parentRefs:
-    {{- range .Values.gateway.parentRefs }}
-    - name: {{ .name }}
-      {{- if .namespace }}
-      namespace: {{ .namespace }}
-      {{- end }}
-      {{- if .sectionName }}
-      sectionName: {{ .sectionName }}
-      {{- end }}
-      {{- if .port }}
-      port: {{ .port }}
-      {{- end }}
-    {{- end }}
-  {{- if .Values.gateway.hostnames }}
-  hostnames:
-    {{- range .Values.gateway.hostnames }}
-    - {{ . | quote }}
-    {{- end }}
-  {{- end }}
+  {{- include "mailcatcher.gateway.routeTargets" . | nindent 2 }}
   rules:
     - matches:
         - path:

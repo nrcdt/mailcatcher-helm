@@ -67,3 +67,28 @@ Name of the Secret holding the OIDC client secret
 {{- define "mailcatcher.oidcSecretName" -}}
 {{- default (printf "%s-oidc-client" (include "mailcatcher.fullname" .)) .Values.gateway.oidc.existingSecret }}
 {{- end }}
+
+{{/*
+parentRefs and hostnames shared by all HTTPRoutes
+*/}}
+{{- define "mailcatcher.gateway.routeTargets" -}}
+parentRefs:
+  {{- range .Values.gateway.parentRefs }}
+  - name: {{ .name }}
+    {{- if .namespace }}
+    namespace: {{ .namespace }}
+    {{- end }}
+    {{- if .sectionName }}
+    sectionName: {{ .sectionName }}
+    {{- end }}
+    {{- if .port }}
+    port: {{ .port }}
+    {{- end }}
+  {{- end }}
+{{- if .Values.gateway.hostnames }}
+hostnames:
+  {{- range .Values.gateway.hostnames }}
+  - {{ . | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}

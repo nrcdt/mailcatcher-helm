@@ -80,6 +80,9 @@ The following table lists the configurable parameters of the Mailcatcher chart a
 | gateway.annotations                          | Annotations for the HTTPRoute                                  | {}                       |
 | gateway.parentRefs                           | Parent Gateway references (name, namespace, sectionName, port) | [{name: eg, namespace: envoy-gateway-system}] |
 | gateway.hostnames                            | Hostnames to match on                                          | [mailcatcher.example.com] |
+| gateway.healthRoute.enabled                  | Create an unauthenticated HTTPRoute for external health checks | false                    |
+| gateway.healthRoute.path                     | Exact path the health checker calls                            | /healthz                 |
+| gateway.healthRoute.backendPath              | Path on Mailcatcher the request is rewritten to                | /                        |
 | gateway.oidc.enabled                         | Enable OIDC redirect flow via SecurityPolicy                   | false                    |
 | gateway.oidc.provider.issuer                 | OIDC provider issuer URL                                       |                          |
 | gateway.oidc.provider.authorizationEndpoint  | OIDC authorization endpoint (optional, discovered from issuer) |                          |
@@ -252,6 +255,17 @@ gateway:
                 valueType: StringArray
                 values: ["mailcatcher-users"]
 ```
+
+**Health checks through the gateway:**
+
+With OIDC, JWT or authorization enabled, every request through the HTTPRoute must authenticate, so an upstream load balancer or uptime monitor gets a 302/401/403 instead of 200. Kubelet probes and Envoy Gateway's own backend health checks go straight to the pod and are not affected. For external checkers, enable the health route:
+```yaml
+gateway:
+  healthRoute:
+    enabled: true
+    path: /healthz     # point the checker at https://mailcatcher.example.com/healthz
+```
+This creates a second HTTPRoute `<fullname>-health` with an `Exact` match on `path`. The SecurityPolicy only targets the main route, so this path skips authentication. Gateway API prefers exact matches over the main route's `/` prefix. The request is rewritten to `backendPath` (default `/`), which returns Mailcatcher's static UI without any messages, so the check proves the pod is reachable without exposing mail.
 
 Values are validated against `values.schema.json` on `helm install`, `upgrade`, `lint` and `template`: types and enums, plus the fields required once a feature is enabled (e.g. `oidc.provider.issuer`, `oidc.clientID`, `oidc.redirectURL`, a client secret, or a JWKS source for each JWT provider).
 

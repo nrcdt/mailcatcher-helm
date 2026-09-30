@@ -21,6 +21,14 @@
           }
         },
         "hostnames": { "type": "array", "items": { "type": "string" } },
+        "healthRoute": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "path": { "type": "string", "pattern": "^/" },
+            "backendPath": { "type": "string", "pattern": "^/" }
+          }
+        },
         "oidc": {
           "type": "object",
           "properties": {

@@ -1,0 +1,26 @@
+{{- if and .Values.gateway.enabled .Values.gateway.healthRoute.enabled }}
+# Unauthenticated route for external health checks. The SecurityPolicy only
+# targets the main HTTPRoute, so this exact-path match bypasses OIDC/JWT.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "mailcatcher.fullname" . }}-health
+  labels:
+    {{- include "mailcatcher.labels" . | nindent 4 }}
+spec:
+  {{- include "mailcatcher.gateway.routeTargets" . | nindent 2 }}
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: {{ .Values.gateway.healthRoute.path | quote }}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: {{ .Values.gateway.healthRoute.backendPath | quote }}
+      backendRefs:
+        - name: {{ include "mailcatcher.fullname" . }}-http
+          port: {{ .Values.http_service.port }}
+{{- end }}
